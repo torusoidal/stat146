@@ -1,0 +1,47 @@
+---
+title: "STAT 146 US Total Lithium Carbonate Imports Analysis"
+author: "Victoria Rios"
+date: "12/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## background  
+lithium carbonate is a form of clean lithium used in lithium-ion batteries, in everything from your phone to a Tesla battery. 
+The recent US backed coup in Bolivia was due partially to their lithium reserves.  
+The following is monthly imports of lithium carbonate in customs value ($US)^[The value of goods imported as appraised by U.S. Customs and Border Protection. This value is generally defined as the price actually paid or payable for merchandise when sold for exportation to the U.S. It excludes U.S. import duties, freight, insurance, and other charges incurred in bringing the merchandise to the U.S. (General Imports)] to US ports from January 2003 to September 2019 from usatrade.census.gov
+
+how much moneys of lithium is coming into the united states each month?  
+can we see any trends? (spikes at electric car production?)  
+can we predict future without taking politics into account?  
+
+## Cleaning section
+
+```{r}
+# for cleaning
+library(tidyverse)
+library(lubridate)
+# the textbook
+library(TSA)
+
+# do not alter lithium.raw!
+lithium.raw <- read.csv("usa_lithium_monthly_port_level_imports.csv",
+                    skip = 4, header = T)
+
+lithium <- lithium.raw %>%
+  rename(CustomsValue = Customs.Value..Gen....US.) %>% # rename to something friendlier
+  select(Time, CustomsValue) %>% # not the null or Total/lithum carbonate columns
+  distinct() %>% # clear out the double lines
+  separate(Time, into = c("Month", "Year"), convert = T) %>%
+  mutate(monthnum = rep(1:12, length.out = 201)) %>% # this is janky code
+  mutate(time = make_date(Year, monthnum)) %>%
+  select(time, CustomsValue, Year, monthnum) # kept year & monthnum just in case
+
+lithium.ts <- ts(lithium$CustomsValue,
+                 start = c(2003, 1), end = c(2019, 9), frequency = 12)
+plot(lithium.ts)
+```
+
